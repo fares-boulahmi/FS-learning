@@ -2,11 +2,11 @@
 import { useMemo, useState } from "react";
 import { iconList } from "../util/iconMap";
 
-interface IconPickerProps {
+type IconPickerProps = {
   value?: string; // currently selected icon name
   onChange: (name: string) => void;
   placeholder?: string;
-}
+};
 
 export function IconPicker({
   value,
@@ -30,22 +30,11 @@ export function IconPicker({
   );
 
   return (
-    <div style={{ position: "relative", width: 280 }}>
+    <div className="relative  w-full max-w-[40vw] ">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          width: "100%",
-          padding: "8px 12px",
-          border: "1px solid #ccc",
-          borderRadius: 6,
-          background: "#fff",
-          cursor: "pointer",
-          color: "black",
-        }}
+        className="flex items-center gap-2 w-full px-3 py-2 rounded border border-(--outline-color) bg-(--background-color) text-zinc-200 cursor-pointer"
       >
         {selected ? (
           <>
@@ -53,51 +42,21 @@ export function IconPicker({
             <span>{selected.label}</span>
           </>
         ) : (
-          <span style={{ color: "#cccccc" }}>Select an icon</span>
+          <span className="text-zinc-500">Select an icon</span>
         )}
       </button>
 
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "110%",
-            left: 0,
-            width: "100%",
-            maxHeight: 320,
-            overflowY: "auto",
-            border: "1px solid #ccc",
-            borderRadius: 6,
-            background: "#fff",
-            zIndex: 20,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            color: "black",
-          }}
-        >
+        <div className="absolute top-[110%] left-0 w-full max-h-80 overflow-y-auto rounded-lg border border-(--outline-color) bg-(--background-color) text-zinc-200 z-20 shadow-lg shadow-black/40">
           <input
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              border: "none",
-              borderBottom: "1px solid #eee",
-              outline: "none",
-              boxSizing: "border-box",
-              color: "black",
-            }}
+            className="w-full px-3 py-2 border-0 border-b border-(--outline-color) outline-none bg-transparent text-zinc-200 placeholder:text-zinc-500"
           />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 4,
-              padding: 8,
-            }}
-          >
+          <div className="grid grid-cols-4 gap-1 p-2">
             {filtered.map(({ name, label, Icon }) => (
               <button
                 key={name}
@@ -108,45 +67,20 @@ export function IconPicker({
                   setOpen(false);
                   setQuery("");
                 }}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: 8,
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  border:
-                    name === value
-                      ? "1px solid #4f46e5"
-                      : "1px solid transparent",
-                  background: name === value ? "#eef2ff" : "transparent",
-                }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-md cursor-pointer text-zinc-200 border ${
+                  name === value
+                    ? "border-indigo-500 bg-zinc-800"
+                    : "border-transparent"
+                }`}
               >
                 <Icon size={22} />
-                <span
-                  style={{
-                    fontSize: 10,
-                    textAlign: "center",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    width: "100%",
-                  }}
-                >
+                <span className="text-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis w-full">
                   {label}
                 </span>
               </button>
             ))}
             {filtered.length === 0 && (
-              <div
-                style={{
-                  gridColumn: "1 / -1",
-                  padding: 12,
-                  color: "#cccccc",
-                  textAlign: "center",
-                }}
-              >
+              <div className="col-span-4 p-3 text-zinc-500 text-center">
                 No icons found
               </div>
             )}
