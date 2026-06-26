@@ -1,45 +1,24 @@
 import { useMemo, useState } from "react";
+import type { DayKey, GoodHabitFrequency, NewHabitInput } from "../api/Types";
+import { DAYS } from "../api/Types";
 import Button from "./Button";
-import { IconPicker } from "./IconPicker";
-import { IconRenderer } from "./IconRender";
+import { IconPicker } from "./Icon/IconPicker";
+import { IconRenderer } from "./Icon/IconRender";
 
-type FrequencyType = "everyday" | "specific" | "timesPerWeek";
-
-const DAYS = [
-  { key: "sunday", label: "Sun", full: "Sunday" },
-  { key: "monday", label: "Mon", full: "Monday" },
-  { key: "tuesday", label: "Tue", full: "Tuesday" },
-  { key: "wednesday", label: "Wed", full: "Wednesday" },
-  { key: "thursday", label: "Thu", full: "Thursday" },
-  { key: "friday", label: "Fri", full: "Friday" },
-  { key: "saturday", label: "Sat", full: "Saturday" },
-] as const;
-
-type DayKey = (typeof DAYS)[number]["key"];
-
-export interface HabitFormData {
-  name: string;
-  description: string;
-  icon: string;
-  frequencyType: FrequencyType;
-  specificDays: DayKey[];
-  timesPerWeek: number;
-}
-
-interface LogHabitModalProps {
+type LogHabitModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: HabitFormData) => void;
-}
+  onSave: (data: NewHabitInput) => void;
+};
 
 const FREQUENCY_OPTIONS: {
-  type: FrequencyType;
+  type: GoodHabitFrequency;
   label: string;
   icon: string;
 }[] = [
   { type: "everyday", label: "Everyday", icon: "repeat" },
-  { type: "specific", label: "Specific Days", icon: "calendar" },
-  { type: "timesPerWeek", label: "Times per Week", icon: "list" },
+  { type: "custom_days", label: "Specific Days", icon: "calendar" },
+  { type: "times_per_week", label: "Times per Week", icon: "list" },
 ];
 
 export default function LogHabitModal({
@@ -50,13 +29,14 @@ export default function LogHabitModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("");
-  const [frequencyType, setFrequencyType] = useState<FrequencyType>("everyday");
-  const [specificDays, setSpecificDays] = useState<DayKey[]>(["monday"]);
+  const [frequencyType, setFrequencyType] =
+    useState<GoodHabitFrequency>("everyday");
+  const [specificDays, setSpecificDays] = useState<DayKey[]>(["0"]);
   const [timesPerWeek, setTimesPerWeek] = useState(3);
 
   const scheduledDays: DayKey[] = useMemo(() => {
     if (frequencyType === "everyday") return DAYS.map((d) => d.key);
-    if (frequencyType === "specific") return specificDays;
+    if (frequencyType === "custom_days") return specificDays;
     return DAYS.slice(0, timesPerWeek).map((d) => d.key);
   }, [frequencyType, specificDays, timesPerWeek]);
 
@@ -80,12 +60,13 @@ export default function LogHabitModal({
 
   const handleSave = () => {
     onSave({
+      kind: "good",
       name,
       description,
       icon,
-      frequencyType,
-      specificDays,
-      timesPerWeek,
+      freq: frequencyType,
+      days: specificDays,
+      timesPerWeek: timesPerWeek,
     });
   };
 
@@ -163,7 +144,7 @@ export default function LogHabitModal({
               })}
             </div>
 
-            {frequencyType === "specific" && (
+            {frequencyType === "custom_days" && (
               <div className="flex justify-between gap-1.5 pt-1">
                 {DAYS.map((day) => {
                   const selected = specificDays.includes(day.key);
@@ -187,7 +168,7 @@ export default function LogHabitModal({
               </div>
             )}
 
-            {frequencyType === "timesPerWeek" && (
+            {frequencyType === "times_per_week" && (
               <div className="flex items-center gap-3 pt-1">
                 <input
                   type="number"
@@ -249,16 +230,10 @@ export default function LogHabitModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 border-t border-(--outline-color) px-6 py-4">
-          <Button onClick={onClose} theme={false} fontSize={12}>
+          <Button onClick={onClose} theme={false}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disable={!name.trim()}
-            theme={true}
-            fontSize={12}
-          >
+          <Button onClick={handleSave} disabled={!name.trim()} theme={true}>
             Save Habit
           </Button>
         </div>

@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import calendar from "../assets/calendar.svg";
+import calendar from "../../assets/calendar.svg";
 
 export default function TargetDate({
   TargetDate,

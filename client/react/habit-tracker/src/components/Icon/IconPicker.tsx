@@ -1,6 +1,6 @@
 // IconPicker.tsx
 import { useMemo, useState } from "react";
-import { iconList } from "../util/iconMap";
+import { iconList } from "../../util/iconMap";
 
 type IconPickerProps = {
   value?: string; // currently selected icon name
@@ -17,7 +17,7 @@ export function IconPicker({
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return iconList.slice(0, 50); // cap initial render, ~1500+ icons exist
+    if (!query.trim()) return iconList.slice(0, 150); // cap initial render, ~1500+ icons exist
     const q = query.toLowerCase();
     return iconList
       .filter(({ label }) => label.toLowerCase().includes(q))
@@ -30,7 +30,7 @@ export function IconPicker({
   );
 
   return (
-    <div className="relative  w-full max-w-[40vw] ">
+    <div className="relative  w-full ">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

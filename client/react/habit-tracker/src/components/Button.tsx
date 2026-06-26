@@ -1,37 +1,33 @@
-import type { JSX } from "react";
+import type { ComponentProps, JSX } from "react";
+import { twMerge } from "tailwind-merge";
 type CustomButtonProps = {
   theme: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  children: React.ReactNode;
-  disable?: boolean;
-  type?: "button" | "submit" | "reset";
-  fontSize: number;
-};
+} & ComponentProps<"button">;
 
 export default function Button({
   theme,
   onClick,
-  children,
-  disable = false,
-  type = "button",
-  fontSize = 12,
+  className,
+  ...props
 }: CustomButtonProps): JSX.Element {
-  let btnStyle: string =
-    "bg-(--dark-background-color) text-(--white-color) border-[#444444]";
-  if (theme) {
-    btnStyle =
-      "bg-[#E8E8E8] text-[#111111] border-[#000000] font-bold hover:opacity-90 ";
-  }
-
   return (
     <button
       onClick={onClick}
-      disabled={disable}
-      type={type}
-      className={`${btnStyle} flex items-center py-3 px-10 border-2 rounded min-w-fit  tracking-wide cursor-pointer transition-opacity disabled:cursor-not-allowed disabled:opacity-40 text-[${fontSize}px]
-`}
-    >
-      {children}
-    </button>
+      {...props}
+      className={twMerge(
+        btnTheme(theme),
+        " flex items-center py-3 px-10 border-2 rounded min-w-fit  tracking-wide cursor-pointer transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ",
+        className,
+      )}
+    />
   );
+}
+function btnTheme(theme: boolean) {
+  switch (theme) {
+    case true:
+      return "bg-(--white-color) text-(--background-color) border-(--background-color) font-bold hover:opacity-90";
+    case false:
+      return "bg-(--dark-background-color) text-(--white-color) border-[--outline-color]";
+  }
 }
