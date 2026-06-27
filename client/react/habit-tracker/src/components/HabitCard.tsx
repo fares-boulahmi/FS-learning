@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isFuture, isSameDay } from "date-fns";
 import { useState } from "react";
 import { habitsApi } from "../api";
 import {
@@ -8,6 +8,7 @@ import {
   type Habit,
   type NewHabitInput,
 } from "../api/Types";
+import { useHabits } from "../context/useHabit";
 import Button from "./Button";
 import { IconRenderer } from "./Icon/IconRender";
 
@@ -39,7 +40,7 @@ export default function HabitCard({ habit }: { habit: Habit }) {
   const scheduledDays = getScheduledDays(habit);
   const [isTodayDone, setIsTodayDone] = useState<boolean>(SetToday(habit));
 
-  console.log("pass the changin today");
+  const { DeleteHabit, visibleDates, toggleHabit } = useHabits();
 
   const btnStyle = isTodayDone
     ? "text-green-500 bg-transparent border-green-800 line-through "
@@ -71,7 +72,7 @@ export default function HabitCard({ habit }: { habit: Habit }) {
   }
 
   return (
-    <div className="rounded border border-(--outline-color) bg-(--background-color) p-4">
+    <div className="rounded border border-(--outline-color) bg-(--background-color) p-4 cursor-pointer">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           {habit.icon && (
@@ -107,9 +108,41 @@ export default function HabitCard({ habit }: { habit: Habit }) {
             })}
           </div>
         )}
-        <Button theme={true} className={btnStyle} onClick={CompleteHabit}>
-          {isTodayDone ? "Done" : "Complete"}
-        </Button>
+        <div className="flex flex-row gap-1">
+          <Button
+            theme={false}
+            onClick={() => DeleteHabit(habit.id)}
+            className="px-4 text-(--secondary-color) border-(--secondary-color) font-extrabold border-4 "
+          >
+            Delete
+          </Button>
+          <Button
+            theme={true}
+            className={btnStyle}
+            onClick={(e) => {
+              e.stopPropagation();
+              CompleteHabit();
+            }}
+          >
+            {isTodayDone ? "Done" : "Complete"}
+          </Button>
+        </div>
+      </div>
+      <div className=" mt-2 pt-2 border-t-2 border-(--outline-color) flex  ">
+        {visibleDates.map((date) => (
+          <Button
+            className="flex flex-1 flex-col items-center gap-0.5 rounded-lg text-xs"
+            key={date.toISOString()}
+            disabled={isFuture(date)}
+            onClick={() => toggleHabit(habit.id, date)}
+            theme={
+              habit?.Completions.some((d) => isSameDay(date, d)) ? true : false
+            }
+          >
+            <span className="font-medium">{format(date, "EEE")}</span>
+            <span>{format(date, "d")}</span>
+          </Button>
+        ))}
       </div>
     </div>
   );

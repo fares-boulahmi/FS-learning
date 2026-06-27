@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import type { DayKey, GoodHabitFrequency, NewHabitInput } from "../api/Types";
+import type { DayKey, GoodHabitFrequency } from "../api/Types";
 import { DAYS } from "../api/Types";
+import { useHabits } from "../context/useHabit";
 import Button from "./Button";
 import { IconPicker } from "./Icon/IconPicker";
 import { IconRenderer } from "./Icon/IconRender";
@@ -8,7 +9,6 @@ import { IconRenderer } from "./Icon/IconRender";
 type LogHabitModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: NewHabitInput) => void;
 };
 
 const FREQUENCY_OPTIONS: {
@@ -21,11 +21,7 @@ const FREQUENCY_OPTIONS: {
   { type: "times_per_week", label: "Times per Week", icon: "list" },
 ];
 
-export default function LogHabitModal({
-  isOpen,
-  onClose,
-  onSave,
-}: LogHabitModalProps) {
+export default function LogHabitModal({ isOpen, onClose }: LogHabitModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("");
@@ -33,6 +29,7 @@ export default function LogHabitModal({
     useState<GoodHabitFrequency>("everyday");
   const [specificDays, setSpecificDays] = useState<DayKey[]>(["0"]);
   const [timesPerWeek, setTimesPerWeek] = useState(3);
+  const { addHabit } = useHabits();
 
   const scheduledDays: DayKey[] = useMemo(() => {
     if (frequencyType === "everyday") return DAYS.map((d) => d.key);
@@ -59,7 +56,7 @@ export default function LogHabitModal({
   };
 
   const handleSave = () => {
-    onSave({
+    addHabit({
       kind: "good",
       name,
       description,
@@ -68,6 +65,7 @@ export default function LogHabitModal({
       days: specificDays,
       timesPerWeek: timesPerWeek,
     });
+    onClose();
   };
 
   return (
@@ -98,6 +96,7 @@ export default function LogHabitModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
               placeholder="Habit Name (e.g. Deep Work)"
               className="w-full rounded border border-(--outline-color) bg-(--background-color) px-4 py-3 text-sm text-(--primary-color) placeholder:text-(--secondary-color) outline-none focus:border-(--primary-color)"
             />

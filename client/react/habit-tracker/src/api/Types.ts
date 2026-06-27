@@ -29,7 +29,7 @@ type BaseHabit = {
   name: string;
   icon: string;
   description: string;
-  Completions?: string[];
+  Completions?: (string | Date)[];
   Amount?: Amount;
   createdAt: string; // ISO timestamp
 };

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { habitsApi } from "../api/Habits";
-import type { Habit } from "../api/Types";
+import type { NewHabitInput } from "../api/Types";
 import Button from "./Button";
 import LogHabitModal from "./LogHabitModal";
 
@@ -9,15 +9,9 @@ export default function CreateHabitBtn({
   children,
 }: {
   className?: string;
-  children;
+  children: ReactNode;
 }) {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const handleSave = async (data: Habit) => {
-    console.log("New habit:", data);
-    await habitsApi.create(data);
-    // persist it, add to your habits list, etc.
-    setIsModalOpen(false);
-  };
 
   return (
     <div>
@@ -33,7 +27,6 @@ export default function CreateHabitBtn({
       <LogHabitModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
       />
     </div>
   );

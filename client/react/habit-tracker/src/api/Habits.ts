@@ -21,6 +21,7 @@ export const habitsApi = {
     const habit = {
       ...input,
       id: crypto.randomUUID(),
+      Completions: [],
       createdAt: new Date().toISOString(),
     } as Habit;
 
