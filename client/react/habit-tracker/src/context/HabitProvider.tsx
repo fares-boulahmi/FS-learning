@@ -33,53 +33,6 @@ export default function HabitProvider({ children }: { children: ReactNode }) {
     getHabits();
   };
 
-  // async function DayCompletion(
-  //   id: string,
-  //   Completions: string[],
-  //   todayCompletion: boolean,
-  // ): Promise<boolean> {
-  //   if (todayCompletion) {
-  //     if (!Completions || Completions.length === 0) return false;
-
-  //     await habitsApi.update(id, {
-  //       Completions: Completions?.splice(-1, 1),
-  //     });
-  //     return false;
-  //   } else {
-  //     if (!Completions || Completions.length === 0) {
-  //       await habitsApi.update(id, {
-  //         Completions: [format(new Date(), DateFomat)],
-  //       });
-  //     } else {
-  //       await habitsApi.update(id, {
-  //         Completions: [...Completions, format(new Date(), DateFomat)],
-  //       });
-  //     }
-  //     return true;
-  //   }
-  // }
-  async function DayCompletion(
-    id: string,
-    Completions: (Date | string)[],
-    todayCompletion: boolean,
-  ): Promise<boolean> {
-    const today = format(new Date(), DateFomat);
-
-    const currHabit = await habitsApi.getById(id);
-    const CompletionsDays = currHabit.Completions ?? [];
-
-    if (todayCompletion) {
-      // Remove today's completion
-      const updated = CompletionsDays.filter((c) => !isSameDay(c, today));
-      await habitsApi.update(id, { Completions: updated });
-      return false;
-    } else {
-      // Add today's completion
-      const updated = [...CompletionsDays, today];
-      await habitsApi.update(id, { Completions: updated });
-      return true;
-    }
-  }
   async function DeleteHabit(id: string) {
     setLoading(true);
     const habit = await habitsApi.getById(id);
@@ -97,8 +50,8 @@ export default function HabitProvider({ children }: { children: ReactNode }) {
     },
     undefined
   > = eachDayOfInterval({
-    start: startOfWeek(week, { weekStartsOn: 1 }),
-    end: endOfWeek(week, { weekStartsOn: 1 }),
+    start: startOfWeek(week, { weekStartsOn: 0 }),
+    end: endOfWeek(week, { weekStartsOn: 0 }),
   });
 
   const onNextWeek = () => setWeekOffset((o) => o + 1);
@@ -119,6 +72,14 @@ export default function HabitProvider({ children }: { children: ReactNode }) {
     }
     getHabits();
   }
+  async function editHabit(id: string, data: NewHabitInput) {
+    setLoading(true);
+    const habit = await habitsApi.getById(id);
+    if (!habit) throw new Error("there no habit with this id to delete ");
+    await habitsApi.update(id, data);
+    getHabits();
+    setLoading(false);
+  }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -132,11 +93,11 @@ export default function HabitProvider({ children }: { children: ReactNode }) {
         error,
         visibleDates,
         addHabit,
-        DayCompletion,
         DeleteHabit,
         onNextWeek,
         onPrevWeek,
         toggleHabit,
+        editHabit,
       }}
     >
       {children}

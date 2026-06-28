@@ -1,15 +1,8 @@
 import { format, isFuture, isSameDay } from "date-fns";
-import { useState } from "react";
-import { habitsApi } from "../api";
-import {
-  DateFomat,
-  DAYS,
-  type DayKey,
-  type Habit,
-  type NewHabitInput,
-} from "../api/Types";
+import { DAYS, type DayKey, type Habit } from "../api/Types";
 import { useHabits } from "../context/useHabit";
 import Button from "./Button";
+import EditHabitBtn from "./EditHabitBtn";
 import { IconRenderer } from "./Icon/IconRender";
 
 function getScheduledDays(habit: Habit): DayKey[] | undefined {
@@ -17,59 +10,52 @@ function getScheduledDays(habit: Habit): DayKey[] | undefined {
     if (habit.freq === "everyday") return DAYS.map((d) => d.key);
     if (habit.freq === "custom_days") return habit.days;
     return DAYS.slice(0, habit.timesPerWeek).map((d) => d.key);
-  } else {
-    return undefined;
   }
+  return undefined;
 }
-function SetToday(habit: NewHabitInput): boolean {
-  if (habit.Completions && habit.Completions.length > 0) {
-    console.log("changing today is work");
 
-    const todayDate = format(new Date(), DateFomat);
-    if (habit.Completions[habit.Completions.length - 1] === todayDate) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return false;
+// Returns true if this date button should be disabled
+function isDateDisabled(
+  habit: Habit,
+  date: Date,
+  visibleDates: Date[],
+): boolean {
+  if (isFuture(date)) return true;
+
+  if (habit.kind !== "good") return false;
+
+  if (habit.freq === "custom_days" && habit.days) {
+    // day of week: 0=Sun,1=Mon,...6=Sat — map to your DayKey
+    const dayIndex = date.getDay(); // 0-6
+    // DAYS keys appear to be "0"=Mon? Check your DAYS definition.
+    // Adjust mapping below if needed:
+    const dayKey = String(dayIndex) as DayKey;
+    const alreadyDone = habit.Completions?.some((c) => isSameDay(c, date));
+    if (alreadyDone) return false; // allow toggling off
+    return !habit.days.includes(dayKey);
   }
+
+  if (habit.freq === "times_per_week" && habit.timesPerWeek) {
+    const alreadyDone = habit.Completions?.some((c) => isSameDay(c, date));
+    if (alreadyDone) return false; // allow toggling off
+
+    // Count completions within the visible week range
+    const weekStart = visibleDates[0];
+    const weekEnd = visibleDates[visibleDates.length - 1];
+    const completionsThisWeek = (habit.Completions ?? []).filter((c) => {
+      const d = new Date(c);
+      return d >= weekStart && d <= weekEnd;
+    }).length;
+
+    return completionsThisWeek >= habit.timesPerWeek;
+  }
+
+  return false;
 }
 
 export default function HabitCard({ habit }: { habit: Habit }) {
   const scheduledDays = getScheduledDays(habit);
-  const [isTodayDone, setIsTodayDone] = useState<boolean>(SetToday(habit));
-
   const { DeleteHabit, visibleDates, toggleHabit } = useHabits();
-
-  const btnStyle = isTodayDone
-    ? "text-green-500 bg-transparent border-green-800 line-through "
-    : "";
-
-  async function CompleteHabit(): Promise<void> {
-    if (isTodayDone) {
-      if (!habit.Completions || habit.Completions.length === 0) return;
-
-      await habitsApi.update(habit.id, {
-        ...habit,
-        Completions: habit.Completions?.splice(-1, 1),
-      });
-      setIsTodayDone(false);
-    } else {
-      if (!habit.Completions || habit.Completions.length === 0) {
-        await habitsApi.update(habit.id, {
-          ...habit,
-          Completions: [format(new Date(), DateFomat)],
-        });
-      } else {
-        await habitsApi.update(habit.id, {
-          ...habit,
-          Completions: [...habit.Completions, format(new Date(), DateFomat)],
-        });
-      }
-      setIsTodayDone(true);
-    }
-  }
 
   return (
     <div className="rounded border border-(--outline-color) bg-(--background-color) p-4 cursor-pointer">
@@ -108,41 +94,41 @@ export default function HabitCard({ habit }: { habit: Habit }) {
             })}
           </div>
         )}
+
         <div className="flex flex-row gap-1">
           <Button
             theme={false}
             onClick={() => DeleteHabit(habit.id)}
-            className="px-4 text-(--secondary-color) border-(--secondary-color) font-extrabold border-4 "
+            className="px-4 text-(--secondary-color) border-(--secondary-color) font-extrabold border-4"
           >
             Delete
           </Button>
-          <Button
-            theme={true}
-            className={btnStyle}
-            onClick={(e) => {
-              e.stopPropagation();
-              CompleteHabit();
-            }}
-          >
-            {isTodayDone ? "Done" : "Complete"}
-          </Button>
+          <EditHabitBtn habit={habit}>Edit</EditHabitBtn>
         </div>
       </div>
-      <div className=" mt-2 pt-2 border-t-2 border-(--outline-color) flex  ">
-        {visibleDates.map((date) => (
-          <Button
-            className="flex flex-1 flex-col items-center gap-0.5 rounded-lg text-xs"
-            key={date.toISOString()}
-            disabled={isFuture(date)}
-            onClick={() => toggleHabit(habit.id, date)}
-            theme={
-              habit?.Completions.some((d) => isSameDay(date, d)) ? true : false
-            }
-          >
-            <span className="font-medium">{format(date, "EEE")}</span>
-            <span>{format(date, "d")}</span>
-          </Button>
-        ))}
+
+      <div className="mt-2 pt-2 border-t-2 border-(--outline-color) flex">
+        {visibleDates.map((date) => {
+          const disabled = isDateDisabled(habit, date, visibleDates);
+          return (
+            <Button
+              className="flex flex-1 flex-col items-center gap-0.5 rounded-lg text-xs"
+              key={date.toISOString()}
+              disabled={disabled}
+              onClick={() => toggleHabit(habit.id, date)}
+              theme={
+                !habit.Completions
+                  ? false
+                  : habit?.Completions.some((d) => isSameDay(date, d))
+                    ? true
+                    : false
+              }
+            >
+              <span className="font-medium">{format(date, "EEE")}</span>
+              <span>{format(date, "d")}</span>
+            </Button>
+          );
+        })}
       </div>
     </div>
   );

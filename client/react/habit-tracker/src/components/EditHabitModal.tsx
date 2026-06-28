@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
-import type { DayKey, GoodHabitFrequency } from "../api/Types";
+import type { DayKey, GoodHabitFrequency, Habit } from "../api/Types";
 import { DAYS } from "../api/Types";
 import { useHabits } from "../context/useHabit";
 import Button from "./Button";
 import { IconPicker } from "./Icon/IconPicker";
 import { IconRenderer } from "./Icon/IconRender";
 
-type LogHabitModalProps = {
+type EditHabitModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  habit: Habit;
 };
 
 const FREQUENCY_OPTIONS: {
@@ -21,15 +22,22 @@ const FREQUENCY_OPTIONS: {
   { type: "times_per_week", label: "Times per Week", icon: "list" },
 ];
 
-export default function LogHabitModal({ isOpen, onClose }: LogHabitModalProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [icon, setIcon] = useState("");
-  const [frequencyType, setFrequencyType] =
-    useState<GoodHabitFrequency>("everyday");
-  const [specificDays, setSpecificDays] = useState<DayKey[]>(["0"]);
-  const [timesPerWeek, setTimesPerWeek] = useState(3);
-  const { addHabit } = useHabits();
+export default function EditHabitModal({
+  isOpen,
+  onClose,
+  habit,
+}: EditHabitModalProps) {
+  const [name, setName] = useState(habit.name);
+  const [description, setDescription] = useState(habit.description ?? "");
+  const [icon, setIcon] = useState(habit.icon ?? "");
+  const [frequencyType, setFrequencyType] = useState<GoodHabitFrequency>(
+    habit.freq,
+  );
+  const [specificDays, setSpecificDays] = useState<DayKey[]>(
+    habit.days ?? ["0"],
+  );
+  const [timesPerWeek, setTimesPerWeek] = useState(habit.timesPerWeek ?? 3);
+  const { editHabit } = useHabits();
 
   const scheduledDays: DayKey[] = useMemo(() => {
     if (frequencyType === "everyday") return DAYS.map((d) => d.key);
@@ -54,36 +62,26 @@ export default function LogHabitModal({ isOpen, onClose }: LogHabitModalProps) {
     if (Number.isNaN(parsed)) return;
     setTimesPerWeek(Math.min(7, Math.max(1, Math.round(parsed))));
   };
-  function clearData(): void {
-    setName("");
-    setDescription("");
-    setIcon("");
-    setFrequencyType("everyday");
-    setSpecificDays(["0"]);
-    setTimesPerWeek(3);
-  }
 
-  const handleSave = () => {
-    addHabit({
-      kind: "good",
+  const handleSave = async () => {
+    editHabit(habit.id, {
       name,
       description,
       icon,
       freq: frequencyType,
       days: specificDays,
-      timesPerWeek: timesPerWeek,
+      timesPerWeek,
     });
-    clearData();
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--background-color)/80 px-4 ">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--background-color)/80 px-4">
       <div className="w-full max-w-lg rounded border border-(--outline-color) bg-(--dark-background-color) shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-(--outline-color) px-6 py-5">
           <h2 className="text-xl font-semibold text-(--white-color)">
-            Log Habit
+            Edit Habit
           </h2>
           <button
             type="button"
@@ -202,7 +200,7 @@ export default function LogHabitModal({ isOpen, onClose }: LogHabitModalProps) {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   {icon && (
-                    <div className=" text-(--primary-color)">
+                    <div className="text-(--primary-color)">
                       <IconRenderer name={icon} size={15} />
                     </div>
                   )}
@@ -242,7 +240,7 @@ export default function LogHabitModal({ isOpen, onClose }: LogHabitModalProps) {
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!name.trim()} theme={true}>
-            Save Habit
+            Save Changes
           </Button>
         </div>
       </div>

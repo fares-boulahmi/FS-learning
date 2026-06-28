@@ -14,15 +14,11 @@ type Context = {
     undefined
   >;
   addHabit?: (habit: NewHabitInput) => void;
-  DayCompletion?: (
-    id: string,
-    Completions: string[],
-    todayCompletion: boolean,
-  ) => Promise<boolean>;
   DeleteHabit: (id: string) => void;
   onNextWeek: () => void;
   onPrevWeek: () => void;
   toggleHabit: (id: string, date: Date) => void;
+  editHabit: (id: string, data: NewHabitInput) => void;
 };
 
 export const HabitContext = createContext<null | Context>(null);
